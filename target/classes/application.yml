@@ -1,0 +1,9 @@
+spring:
+  elasticsearch:
+    uris: http://localhost:9200
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.example.springelkdemo: DEBUG

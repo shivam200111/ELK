@@ -1,0 +1,62 @@
+version: '3.7'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - elk-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.17.0
+    container_name: logstash
+    environment:
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5000:5000"
+    networks:
+      - elk-network
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_ENCRYPTED_SAVED_OBJECTS_ENCRYPTIONKEY= "n7tX9L1jWwHtqW+4HszzKfgpRqs9eIbTt+HFhzfvlI4="
+
+    networks:
+      - elk-network
+    depends_on:
+      - elasticsearch
+
+networks:
+  elk-network:
+    driver: bridge
+
+volumes:
+  elasticsearch-data:
+    driver: local
